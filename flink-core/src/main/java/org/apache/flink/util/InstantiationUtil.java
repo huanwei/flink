@@ -287,6 +287,25 @@ public final class InstantiationUtil {
 	}
 
 	/**
+	 * Creates a new instance of the given class name and type using the provided {@link ClassLoader}.
+	 *
+	 * @param className of the class to load
+	 * @param targetType type of the instantiated class
+	 * @param classLoader to use for loading the class
+	 * @param <T> type of the instantiated class
+	 * @return Instance of the given class name
+	 * @throws ClassNotFoundException if the class could not be found
+	 */
+	public static <T> T instantiate(final String className, final Class<T> targetType, final ClassLoader classLoader) throws ClassNotFoundException {
+		final Class<? extends T> clazz = Class.forName(
+			className,
+			false,
+			classLoader).asSubclass(targetType);
+
+		return instantiate(clazz);
+	}
+
+	/**
 	 * Creates a new instance of the given class.
 	 *
 	 * @param <T> The generic type of the class.
@@ -495,9 +514,10 @@ public final class InstantiationUtil {
 
 		final ClassLoader old = Thread.currentThread().getContextClassLoader();
 		// not using resource try to avoid AutoClosable's close() on the given stream
-		try (ObjectInputStream oois = isFailureTolerant
+		try {
+			ObjectInputStream oois = isFailureTolerant
 				? new InstantiationUtil.FailureTolerantObjectInputStream(in, cl)
-				: new InstantiationUtil.ClassLoaderObjectInputStream(in, cl)) {
+				: new InstantiationUtil.ClassLoaderObjectInputStream(in, cl);
 			Thread.currentThread().setContextClassLoader(cl);
 			return (T) oois.readObject();
 		}
